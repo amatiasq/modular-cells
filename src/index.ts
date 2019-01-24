@@ -3,15 +3,20 @@ import { _, random } from "./util";
 import Cell from "./cell";
 import Vector from "./vector";
 
-const canvas = document.querySelector('canvas');
 const cells: Cell[] = [];
+const width = window.innerWidth;
+const height = window.innerHeight;
+const speed = 2;
+const canvas = document.querySelector('canvas');
+canvas.width = width;
+canvas.height = height;
 
 for (let i = 0; i < 100; i++)
   cells.push(_(Cell, {
-    x: random(100),
-    y: random(100),
+    x: random(width),
+    y: random(height),
     radius: 5,
-    velocity: Vector.of(random(), random()),
+    velocity: Vector.of(random(-speed, speed), random(-speed, speed)),
   }));
 
 requestAnimationFrame(tick);
@@ -24,8 +29,7 @@ function tick() {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
   for (const cell of cells) {
-    cell.processMovementWill();
-    cell.move();
+    cell.tick();
     render(context, cell);
   }
 }
@@ -33,12 +37,12 @@ function tick() {
 function render(context, cell: Cell) {
   const TAU = Math.PI * 2;
   const radius = cell.radius | 0;
-  const padding = radius * 0.;
+  const padding = radius * 0.5;
 
   context.save();
   context.translate(cell.x, cell.y);
   context.rotate(cell.velocity.radians);
-  context.fillStyle = 'red';
+  context.fillStyle = 'black';
 
   context.beginPath();
   context.arc(0, 0, radius, 0, TAU);

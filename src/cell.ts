@@ -8,9 +8,18 @@ const WILL_ENERGY_RATIO = 1000;
 
 export default class Cell {
 
+  get bounds() {
+
+  }
+
   energy = 0;
   velocity = Vector.of(0, 0);
   get isDead() { return this.energy > 0 }
+
+  tick() {
+    this.processMovementWill();
+    this.move();
+  }
 
   // #region SHAPE
   pos = Vector.of(0, 0);
