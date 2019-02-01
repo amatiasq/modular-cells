@@ -1,5 +1,5 @@
-import { IVector } from "../vector";
 import { onSet } from "../decorators";
+import { IVector } from "../vector";
 
 export default class Rectangle implements IRectangle, IVector {
   // #region Constructors
@@ -13,7 +13,7 @@ export default class Rectangle implements IRectangle, IVector {
   }
 
   static fromTopLeft(top: number, left: number, width: number, height: number) {
-    return this.fromCenter(top + height / 2, left + width / 2, width, height);
+    return this.fromCenter(left + width / 2, top + height / 2, width, height);
   }
 
   static fromCoords(top: number, left: number, right: number, bottom: number) {

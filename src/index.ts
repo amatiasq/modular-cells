@@ -1,40 +1,76 @@
-import { _, random } from "./util";
-
 import Cell from "./cell";
+import SquaredCircle from "./geometry/SquaredCircle";
+import Rectangle from "./geometry/rectangle";
+import Quadtree from "./quadtree";
+import { _, random } from "./util";
 import Vector from "./vector";
 
-const cells: Cell[] = [];
-const width = window.innerWidth;
-const height = window.innerHeight;
+const cells = new Set<Cell>();
 const speed = 2;
+const radius = 5;
+const screen = Rectangle.fromTopLeft(0, 0, window.innerWidth, window.innerHeight);
+const quad = new Quadtree(screen, 3, 10);
 const canvas = document.querySelector('canvas');
-canvas.width = width;
-canvas.height = height;
 
-for (let i = 0; i < 100; i++)
-  cells.push(_(Cell, {
-    x: random(width),
-    y: random(height),
-    radius: 5,
-    velocity: Vector.of(random(-speed, speed), random(-speed, speed)),
-  }));
+canvas.width = screen.width;
+canvas.height = screen.height;
 
-requestAnimationFrame(tick);
+for (let i = 0; i < 100; i++) {
+  const cell = new Cell();
+  cell.id = i;
+  cell.velocity = Vector.of(random(-speed, speed), random(-speed, speed));
+  cell.bounds = SquaredCircle.fromCenter(
+    random(radius + 1, screen.width - radius - 1),
+    random(radius + 1, screen.height - radius - 1),
+    radius,
+  );
+  cells.add(cell);
+  quad.add(cell);
+}
+
+tick();
 
 function tick() {
   requestAnimationFrame(tick);
 
   const context = canvas.getContext('2d');
 
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.save();
+  context.fillStyle = 'black';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.restore();
 
   for (const cell of cells) {
     cell.tick();
-    render(context, cell);
+    renderCell(context, cell);
+
+    if (!screen.contains(cell))
+      cells.delete(cell);
   }
+
+  
+  renderQuad(context, quad);
+  quad.recalculate();
+  console.log(quad.objectCount);
 }
 
-function render(context, cell: Cell) {
+function renderQuad(context, quad: Quadtree) {
+  if (!quad.hasNodes) return;
+
+  const { bounds } = quad;
+
+  context.save();
+  context.strokeStyle = 'gray';
+  context.moveTo(bounds.left, bounds.y)
+  context.lineTo(bounds.right, bounds.y);
+  context.moveTo(bounds.x, bounds.top)
+  context.lineTo(bounds.x, bounds.bottom);
+  context.stroke();
+
+  (quad as any).nodes.forEach(x => renderQuad(context, x));
+}
+
+function renderCell(context, cell: Cell) {
   const TAU = Math.PI * 2;
   const radius = cell.radius | 0;
   const padding = radius * 0.5;
@@ -42,7 +78,7 @@ function render(context, cell: Cell) {
   context.save();
   context.translate(cell.x, cell.y);
   context.rotate(cell.velocity.radians);
-  context.fillStyle = 'black';
+  context.fillStyle = 'white';
 
   context.beginPath();
   context.arc(0, 0, radius, 0, TAU);

@@ -1,19 +1,19 @@
-import Vector from "./vector";
 import { accessor } from "./decorators";
+import SquaredCircle, { ISquaredCircle } from "./geometry/SquaredCircle";
+import Vector from "./vector";
 
 const ENERGY_RADIUS_RATIO = 1;
 const VELOCITY_MODIFIER = 1;
 const WILL_POWER = 0.1;
 const WILL_ENERGY_RATIO = 1000;
 
-export default class Cell {
+export default class Cell implements ISquaredCircle {
 
-  get bounds() {
-
-  }
-
+  id: number;
   energy = 0;
   velocity = Vector.of(0, 0);
+  bounds: SquaredCircle;
+
   get isDead() { return this.energy > 0 }
 
   tick() {
@@ -22,15 +22,21 @@ export default class Cell {
   }
 
   // #region SHAPE
-  pos = Vector.of(0, 0);
-  @accessor(`energy * ${ENERGY_RADIUS_RATIO}`, `energy = # / ${ENERGY_RADIUS_RATIO}`) radius: number;
-  @accessor('radius') size: number;
-  @accessor('pos.x - radius', 'pos = pos.setX(# + radius)') x: number;
-  @accessor('pos.y - radius', 'pos = pos.setY(# + radius)') y: number;
-  @accessor('radius * 2', 'radius = # / 2') width: number;
-  @accessor('radius * 2', 'radius = # / 2') height: number;
-  @accessor('pos.x + radius', 'pos.x = # - radius') endX: number;
-  @accessor('pos.y + radius', 'pos.y = # - radius') endY: number;
+  @accessor('bounds.x') x: number;
+  @accessor('bounds.y') y: number;
+
+  @accessor('bounds.radius') radius: number;
+  @accessor('bounds.diameter') diameter: number;
+
+  @accessor('bounds.width') width: number;
+  @accessor('bounds.height') height: number;
+  @accessor('bounds.halfWidth') halfWidth: number;
+  @accessor('bounds.halfHeight') halfHeight: number;
+
+  @accessor('bounds.top') top: number;
+  @accessor('bounds.left') left: number;
+  @accessor('bounds.right') right: number;
+  @accessor('bounds.bottom') bottom: number;
   // #endregion
 
   // #region WILL
@@ -41,7 +47,9 @@ export default class Cell {
   }
 
   move() {
-    this.pos = this.pos.add(this.velocity.vdiv(VELOCITY_MODIFIER));
+    const { x, y } = this.velocity.vmul(VELOCITY_MODIFIER);
+    this.bounds.x += x;
+    this.bounds.y += y;
   }
 
   processMovementWill() {
@@ -58,4 +66,7 @@ export default class Cell {
   }
   // #endregion
 
+  toString() {
+    return `Cell [${this.id}]`;
+  }
 }

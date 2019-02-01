@@ -1,14 +1,13 @@
 import { accessor, onSet } from "../decorators";
-
+import { IVector } from "../vector";
 import { ICircle } from "./circle";
 import { IRectangle } from "./rectangle";
-import { IVector } from "../vector";
 
-export default class SquaredRectangle
+export default class SquaredCircle
   implements ISquaredCircle, ICircle, IRectangle, IVector {
   // #region Constructors
   static fromCenter(x: number, y: number, radius: number) {
-    const area = new SquaredRectangle();
+    const area = new SquaredCircle();
     area.x = x;
     area.y = y;
     area.radius = radius;
@@ -38,7 +37,7 @@ export default class SquaredRectangle
   // #endregion
 }
 
-interface ISquaredCircle extends ICircle, IRectangle {}
+export interface ISquaredCircle extends ICircle, IRectangle {}
 
 interface ISquaredCircleInternals {
   _x: number;

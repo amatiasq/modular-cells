@@ -19,6 +19,14 @@
     "start": "parcel index.html",
     "test": "jest"
   },
+  "importSort": {
+    ".ts": {
+      "style": "module-compact"
+    }
+  },
+  "prettier": {
+    "trailingComma": "es2015"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC"
