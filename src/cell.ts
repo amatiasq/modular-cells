@@ -6,6 +6,7 @@ const ENERGY_RADIUS_RATIO = 1;
 const VELOCITY_MODIFIER = 1;
 const WILL_POWER = 0.1;
 const WILL_ENERGY_RATIO = 1000;
+const SENSES_RANGE = 50;
 
 export default class Cell implements ISquaredCircle {
 
@@ -13,6 +14,14 @@ export default class Cell implements ISquaredCircle {
   energy = 0;
   velocity = Vector.of(0, 0);
   bounds: SquaredCircle;
+
+  private _senses = SquaredCircle.fromCenter(0, 0, SENSES_RANGE);
+  get senses() {
+    const { _senses: senses, bounds } = this;
+    if (senses.x != bounds.x) senses.x = bounds.x;
+    if (senses.y != bounds.y) senses.y = bounds.y;
+    return senses;
+  }
 
   get isDead() { return this.energy > 0 }
 
@@ -22,6 +31,7 @@ export default class Cell implements ISquaredCircle {
   }
 
   // #region SHAPE
+  @accessor('_senses.radius') vision: number;
   @accessor('bounds.x') x: number;
   @accessor('bounds.y') y: number;
 

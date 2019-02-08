@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "start": "parcel index.html",
+    "clear": "rm -r .cache dist",
     "test": "jest"
   },
   "importSort": {
@@ -25,7 +26,8 @@
     }
   },
   "prettier": {
-    "trailingComma": "es2015"
+    "trailingComma": "all",
+    "singleQuote": true
   },
   "keywords": [],
   "author": "",

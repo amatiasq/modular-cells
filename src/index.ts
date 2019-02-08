@@ -2,20 +2,26 @@ import Cell from "./cell";
 import SquaredCircle from "./geometry/SquaredCircle";
 import Rectangle from "./geometry/rectangle";
 import Quadtree from "./quadtree";
+import CanvasRenderer from "./renderer";
 import { _, random } from "./util";
 import Vector from "./vector";
 
 const cells = new Set<Cell>();
 const speed = 2;
 const radius = 5;
-const screen = Rectangle.fromTopLeft(0, 0, window.innerWidth, window.innerHeight);
-const quad = new Quadtree(screen, 3, 10);
-const canvas = document.querySelector('canvas');
+const screen = Rectangle.fromTopLeft(
+  0,
+  0,
+  window.innerWidth,
+  window.innerHeight,
+);
+const renderer = new CanvasRenderer(document.querySelector("canvas"));
+const quad = new Quadtree(screen, 2, 10);
 
-canvas.width = screen.width;
-canvas.height = screen.height;
+renderer.width = screen.width;
+renderer.height = screen.height;
 
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 10; i++) {
   const cell = new Cell();
   cell.id = i;
   cell.velocity = Vector.of(random(-speed, speed), random(-speed, speed));
@@ -32,66 +38,20 @@ tick();
 
 function tick() {
   requestAnimationFrame(tick);
-
-  const context = canvas.getContext('2d');
-
-  context.save();
-  context.fillStyle = 'black';
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.restore();
+  renderer.clear();
+  const comparisons = {};
 
   for (const cell of cells) {
     cell.tick();
-    renderCell(context, cell);
-
-    if (!screen.contains(cell))
-      cells.delete(cell);
+    renderer.cell(cell);
+    comparisons[cell.id] = quad.retrieve(cell.senses).length - 1;
+    if (!screen.contains(cell)) cells.delete(cell);
   }
 
-  
-  renderQuad(context, quad);
+  renderer.quad(quad);
   quad.recalculate();
-  console.log(quad.objectCount);
+  console.log(comparisons);
 }
-
-function renderQuad(context, quad: Quadtree) {
-  if (!quad.hasNodes) return;
-
-  const { bounds } = quad;
-
-  context.save();
-  context.strokeStyle = 'gray';
-  context.moveTo(bounds.left, bounds.y)
-  context.lineTo(bounds.right, bounds.y);
-  context.moveTo(bounds.x, bounds.top)
-  context.lineTo(bounds.x, bounds.bottom);
-  context.stroke();
-
-  (quad as any).nodes.forEach(x => renderQuad(context, x));
-}
-
-function renderCell(context, cell: Cell) {
-  const TAU = Math.PI * 2;
-  const radius = cell.radius | 0;
-  const padding = radius * 0.5;
-
-  context.save();
-  context.translate(cell.x, cell.y);
-  context.rotate(cell.velocity.radians);
-  context.fillStyle = 'white';
-
-  context.beginPath();
-  context.arc(0, 0, radius, 0, TAU);
-  context.fill();
-  context.moveTo(padding, radius);
-  context.lineTo(radius * 1.5 + padding, 0);
-  context.lineTo(padding, -radius);
-  context.closePath();
-  context.fill();
-
-  context.restore();
-}
-
 
 // as a user I want to see something
 
@@ -104,8 +64,6 @@ function renderCell(context, cell: Cell) {
 // as a cell I want to know when I collide with somebody
 
 // as a developer I want to add plugins to my cells
-
-
 
 // class Map {
 
@@ -134,7 +92,6 @@ function renderCell(context, cell: Cell) {
 //   x: number;
 //   y: number;
 // }
-
 
 // interface ICircle {
 //   pos: Vector;

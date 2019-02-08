@@ -39,7 +39,7 @@ export default class Quadtree {
     public readonly bounds: Rectangle,
     public readonly maxEntities: number,
     public readonly maxDepth: number,
-    public readonly level: number = 0
+    public readonly level: number = 0,
   ) {}
 
   add(entity: IQuadEntity) {
@@ -66,32 +66,36 @@ export default class Quadtree {
       for (let i = 0; i < entities.length; i++) {
         const entity = entities[i];
         const index = this.getIndex(entity);
-  
-        if (index !== null)
-          this.nodes[index].add(entity);
-        else
-          this.entities.push(entity);
+
+        if (index !== null) this.nodes[index].add(entity);
+        else this.entities.push(entity);
       }
     }
   }
 
   getIndex(entity: IQuadEntity): number {
-    const { bounds } = this;
-
     if (DEVELOPMENT_MODE) {
-      if (!bounds.contains(entity)) {
-        throw new Error("Entity is not inside the Quadtree");
+      if (this.level !== 0 && !this.bounds.contains(entity)) {
+        throw new Error(
+          `Entity is not inside the Quadtree at level ${this.level}`,
+        );
       }
     }
 
-    if (entity.bottom < bounds.y) {
-      if (entity.right < bounds.x) return 0;
-      if (entity.left > bounds.x) return 1;
+    return this.unsafeGetIndex(entity);
+  }
+
+  private unsafeGetIndex(area: IRectangle) {
+    const { bounds } = this;
+
+    if (area.bottom < bounds.y) {
+      if (area.right < bounds.x) return 0;
+      if (area.left > bounds.x) return 1;
     }
 
-    if (entity.top > bounds.y) {
-      if (entity.right < bounds.x) return 2;
-      if (entity.left > bounds.x) return 3;
+    if (area.top > bounds.y) {
+      if (area.right < bounds.x) return 2;
+      if (area.left > bounds.x) return 3;
     }
 
     return null;
@@ -107,52 +111,52 @@ export default class Quadtree {
           bounds.top,
           bounds.left,
           bounds.halfWidth,
-          bounds.halfHeight
+          bounds.halfHeight,
         ),
         maxEntities,
         maxDepth,
-        level
+        level,
       ),
       new Quadtree(
         Rectangle.fromTopLeft(
           bounds.top,
           bounds.x,
           bounds.halfWidth,
-          bounds.halfHeight
+          bounds.halfHeight,
         ),
         maxEntities,
         maxDepth,
-        level
+        level,
       ),
       new Quadtree(
         Rectangle.fromTopLeft(
           bounds.y,
           bounds.left,
           bounds.halfWidth,
-          bounds.halfHeight
+          bounds.halfHeight,
         ),
         maxEntities,
         maxDepth,
-        level
+        level,
       ),
       new Quadtree(
         Rectangle.fromTopLeft(
           bounds.y,
           bounds.x,
           bounds.halfWidth,
-          bounds.halfHeight
+          bounds.halfHeight,
         ),
         maxEntities,
         maxDepth,
-        level
-      )
+        level,
+      ),
     ];
   }
 
-  retrieve(target: IQuadEntity) {
+  retrieve(target: IRectangle) {
     if (!this.hasNodes) return this.entities;
 
-    const index = this.getIndex(target);
+    const index = this.unsafeGetIndex(target);
 
     if (index !== null) {
       // prettier-ignore
@@ -167,7 +171,7 @@ export default class Quadtree {
       ...this.nodes[0].retrieve(target),
       ...this.nodes[1].retrieve(target),
       ...this.nodes[2].retrieve(target),
-      ...this.nodes[3].retrieve(target)
+      ...this.nodes[3].retrieve(target),
     ];
   }
 
@@ -186,13 +190,16 @@ export default class Quadtree {
       for (let i = 0; i < promoted.length; i++) {
         const entity = promoted[i];
 
-        if (bounds.contains(entity))
-          this.add(entity);
-        else
-          excluded.push(entity);
+        if (bounds.contains(entity)) this.add(entity);
+        else excluded.push(entity);
       }
 
-      if (this.childObjects === 0) {
+      const { childObjects } = this;
+
+      if (childObjects === 0) {
+        this.nodes = null;
+      } else if (childObjects < this.maxEntities) {
+        this.entities = this.objects;
         this.nodes = null;
       }
     }
@@ -202,19 +209,23 @@ export default class Quadtree {
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
 
-      if (bounds.contains(entity))
-        this.add(entity);
-      else
-        excluded.push(entity);
+      if (bounds.contains(entity)) this.add(entity);
+      else excluded.push(entity);
     }
 
     return excluded;
   }
 
+  forEachChild(
+    iterator: (quad: Quadtree, index: number, parent: Quadtree) => void,
+  ) {
+    if (this.hasNodes)
+      this.nodes.forEach((entry, index) => iterator(entry, index, this));
+  }
+
   private shouldSplit() {
     return (
-      this.entities.length >= this.maxEntities ||
-      this.level >= this.maxDepth
+      this.entities.length >= this.maxEntities || this.level >= this.maxDepth
     );
   }
 }
