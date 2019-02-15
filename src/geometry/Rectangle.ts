@@ -1,5 +1,5 @@
-import { onSet } from "../decorators";
-import { IVector } from "../vector";
+import { onSet } from '../decorators';
+import { IVector } from '../vector';
 
 export default class Rectangle implements IRectangle, IVector {
   // #region Constructors
@@ -51,6 +51,14 @@ export default class Rectangle implements IRectangle, IVector {
       left > this.left &&
       right < this.right
     );
+  }
+
+  collides({ top, left, right, bottom }: IRectangle) {
+    const isBottomInside = this.bottom > bottom && bottom > this.top;
+    const isTopInside = this.bottom > top && top > this.top;
+    const isRightInside = this.right > right && right > this.left;
+    const isLeftInside = this.right > left && left > this.left;
+    return (isBottomInside || isTopInside) && (isRightInside || isLeftInside);
   }
   // #endregion
 }

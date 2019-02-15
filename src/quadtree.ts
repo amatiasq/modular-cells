@@ -1,11 +1,13 @@
-import { DEVELOPMENT_MODE } from "./constants";
-import Rectangle, { IRectangle } from "./geometry/rectangle";
+import { DEVELOPMENT_MODE } from './constants';
+import Rectangle, { IRectangle } from './geometry/rectangle';
 
 export default class Quadtree {
   private nodes: Quadtree[] = null;
   private entities: IQuadEntity[] = [];
 
   private get childObjects() {
+    if (!this.hasNodes) return 0;
+
     return (
       this.nodes[0].objectCount +
       this.nodes[1].objectCount +
@@ -43,8 +45,6 @@ export default class Quadtree {
   ) {}
 
   add(entity: IQuadEntity) {
-    const { entities } = this;
-
     if (this.hasNodes) {
       const index = this.getIndex(entity);
 
@@ -54,22 +54,10 @@ export default class Quadtree {
       }
     }
 
-    entities.push(entity);
+    this.entities.push(entity);
 
-    if (this.shouldSplit()) {
-      if (!this.hasNodes) {
-        this.split();
-      }
-
-      this.entities = [];
-
-      for (let i = 0; i < entities.length; i++) {
-        const entity = entities[i];
-        const index = this.getIndex(entity);
-
-        if (index !== null) this.nodes[index].add(entity);
-        else this.entities.push(entity);
-      }
+    if (!this.hasNodes && this.shouldSplit()) {
+      this.split();
     }
   }
 
@@ -102,6 +90,15 @@ export default class Quadtree {
   }
 
   split() {
+    if (this.hasNodes) {
+      throw new Error('Already splitted');
+    }
+
+    this.createNodes();
+    this.distribute();
+  }
+
+  private createNodes() {
     const { bounds, maxEntities, maxDepth } = this;
     const level = this.level + 1;
 
@@ -153,6 +150,19 @@ export default class Quadtree {
     ];
   }
 
+  private distribute() {
+    const { entities } = this;
+    this.entities = [];
+
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      const index = this.getIndex(entity);
+
+      if (index !== null) this.nodes[index].add(entity);
+      else this.entities.push(entity);
+    }
+  }
+
   retrieve(target: IRectangle) {
     if (!this.hasNodes) return this.entities;
 
@@ -176,41 +186,41 @@ export default class Quadtree {
   }
 
   recalculate(): IQuadEntity[] {
-    const { bounds, entities } = this;
-    let excluded = [];
+    const { bounds, maxEntities } = this;
+    const contained = [];
+    const excluded = [];
+    const promoted = [...this.entities];
 
     if (this.hasNodes) {
-      const promoted = [
+      promoted.push(
         ...this.nodes[0].recalculate(),
         ...this.nodes[1].recalculate(),
         ...this.nodes[2].recalculate(),
         ...this.nodes[3].recalculate(),
-      ];
-
-      for (let i = 0; i < promoted.length; i++) {
-        const entity = promoted[i];
-
-        if (bounds.contains(entity)) this.add(entity);
-        else excluded.push(entity);
-      }
-
-      const { childObjects } = this;
-
-      if (childObjects === 0) {
-        this.nodes = null;
-      } else if (childObjects < this.maxEntities) {
-        this.entities = this.objects;
-        this.nodes = null;
-      }
+      );
     }
 
-    this.entities = [];
-
-    for (let i = 0; i < entities.length; i++) {
-      const entity = entities[i];
-
-      if (bounds.contains(entity)) this.add(entity);
+    for (let i = 0; i < promoted.length; i++) {
+      const entity = promoted[i];
+      if (bounds.contains(entity)) contained.push(entity);
       else excluded.push(entity);
+    }
+
+    // Empty entities array
+    this.entities.length = 0;
+
+    // Shortcut to not calculate `this.childObjects` unless it's necessary
+    if (
+      maxEntities >= contained.length &&
+      maxEntities >= contained.length + this.childObjects
+    ) {
+      contained.push(...this.objects);
+      this.entities = contained;
+      this.nodes = null;
+    } else {
+      for (let i = 0; i < contained.length; i++) {
+        this.add(contained[i]);
+      }
     }
 
     return excluded;
@@ -225,7 +235,7 @@ export default class Quadtree {
 
   private shouldSplit() {
     return (
-      this.entities.length >= this.maxEntities || this.level >= this.maxDepth
+      this.entities.length > this.maxEntities && this.level < this.maxDepth
     );
   }
 }

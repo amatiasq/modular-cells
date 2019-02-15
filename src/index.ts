@@ -1,10 +1,10 @@
-import Cell from "./cell";
-import SquaredCircle from "./geometry/SquaredCircle";
-import Rectangle from "./geometry/rectangle";
-import Quadtree from "./quadtree";
-import CanvasRenderer from "./renderer";
-import { _, random } from "./util";
-import Vector from "./vector";
+import Cell from './cell';
+import SquaredCircle from './geometry/SquaredCircle';
+import Rectangle from './geometry/rectangle';
+import Quadtree from './quadtree';
+import CanvasRenderer from './renderer';
+import { _, random } from './util';
+import Vector from './vector';
 
 const cells = new Set<Cell>();
 const speed = 2;
@@ -15,8 +15,9 @@ const screen = Rectangle.fromTopLeft(
   window.innerWidth,
   window.innerHeight,
 );
-const renderer = new CanvasRenderer(document.querySelector("canvas"));
+const renderer = new CanvasRenderer(document.querySelector('canvas'));
 const quad = new Quadtree(screen, 2, 10);
+let excluded = [];
 
 renderer.width = screen.width;
 renderer.height = screen.height;
@@ -45,12 +46,23 @@ function tick() {
     cell.tick();
     renderer.cell(cell);
     comparisons[cell.id] = quad.retrieve(cell.senses).length - 1;
-    if (!screen.contains(cell)) cells.delete(cell);
+
+    if (!screen.containsPoint(cell)) {
+      cell.x = (cell.x + screen.width) % screen.width;
+      cell.y = (cell.y + screen.height) % screen.height;
+    }
   }
 
   renderer.quad(quad);
-  quad.recalculate();
-  console.log(comparisons);
+
+  for (let i = excluded.length; i--; ) {
+    if (quad.bounds.contains(excluded[i])) {
+      quad.add(excluded[i]);
+      excluded.splice(i, 1);
+    }
+  }
+
+  excluded.push(...quad.recalculate());
 }
 
 // as a user I want to see something
