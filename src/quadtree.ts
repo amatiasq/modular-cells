@@ -1,5 +1,5 @@
 import { DEVELOPMENT_MODE } from './constants';
-import Rectangle, { IRectangle } from './geometry/rectangle';
+import Rectangle, { IRectangle } from './geometry/Rectangle';
 
 export default class Quadtree {
   private nodes: Quadtree[] = null;

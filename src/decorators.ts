@@ -1,20 +1,20 @@
-const DEBUGGER = "debugger;";
+const DEBUGGER = 'debugger;';
 
 export function proxy(
   code,
-  { debug = false, log = false, logCall = log, logResult = log }
+  { debug = false, log = false, logCall = log, logResult = log },
 ) {
   return (prototype, name) => {
     const prop = printProp(name, code);
     const fn = new Function(
-      "...args",
+      '...args',
       `
-      ${debug ? DEBUGGER : ""}
-      ${logCall ? `console.log('CALL', ${prop}, 'PARAMS', ...args);` : ""}
+      ${debug ? DEBUGGER : ''}
+      ${logCall ? `console.log('CALL', ${prop}, 'PARAMS', ...args);` : ''}
       with (this) const result = ${code}(...args);
-      ${logResult ? `console.log('>>>>', ${prop}, result);` : ""}
+      ${logResult ? `console.log('>>>>', ${prop}, result);` : ''}
       return result;
-    `
+    `,
     );
 
     Object.defineProperty(prototype, name, { value: fn });
@@ -31,27 +31,10 @@ export function onSet<T>(callback: (instance: T, prev?, value?) => void) {
         const prev = this[hidden];
         this[hidden] = value;
         callback(this, prev, value);
-
-        // if (this.__onSet_pause) {
-        //   this.__onSet_pause.push(callback);
-        // } else {
-        //   callback(this)
-        // }
-      }
+      },
     });
   };
 }
-
-// onSet.pause = instance => instance.__onSet_pause = [];
-// onSet.resume = instance => {
-//     const list = instance.__onSet_pause;
-//     instance.__onSet_pause = null;
-
-//     for (let i = 0; i < list.length; i++) {
-//       list[i](instance);
-//     }
-//   }
-// };
 
 export function accessor(
   getter,
@@ -62,30 +45,30 @@ export function accessor(
     logSet = log,
     debug = false,
     debugGet = debug,
-    debugSet = debug
-  } = {}
+    debugSet = debug,
+  } = {},
 ) {
   return (prototype, name) => {
     const propGet = printProp(name, getter);
     const get: any = new Function(`
-      ${debugGet ? DEBUGGER : ""}
-      ${logGet ? `with (this) console.log('GET', ${propGet}, ${getter});` : ""}
+      ${debugGet ? DEBUGGER : ''}
+      ${logGet ? `with (this) console.log('GET', ${propGet}, ${getter});` : ''}
       with(this) return ${getter}
     `);
 
     const propSet = printProp(name, getter);
-    const setterCode = setter.replace(/#/, "value");
+    const setterCode = setter.replace(/#/, 'value');
     const set: any = new Function(
-      "value",
+      'value',
       `
-      ${debugSet ? DEBUGGER : ""}
+      ${debugSet ? DEBUGGER : ''}
       ${
         logSet
           ? `with (this) console.log('SET', ${propSet}, value, 'PREV', ${setterCode})`
-          : ""
+          : ''
       }
       with (this) ${setterCode}
-    `
+    `,
     );
 
     Object.defineProperty(prototype, name, { get, set });
@@ -94,10 +77,10 @@ export function accessor(
 
 export function getter(
   code,
-  { debug = false, debugGet = debug || false } = {}
+  { debug = false, debugGet = debug || false } = {},
 ) {
   const get: any = new Function(
-    `${debugGet ? DEBUGGER : ""} with(this) return ${code}`
+    `${debugGet ? DEBUGGER : ''} with(this) return ${code}`,
   );
 
   return (prototype, name) => {

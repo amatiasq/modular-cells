@@ -1,6 +1,5 @@
-import { accessor, onSet } from "../decorators";
-
-import { IVector } from "../vector";
+import accessor from '../util/accessor';
+import { IVector } from './Vector';
 
 export default class Circle implements ICircle, IVector {
   static fromRadius(x: number, y: number, radius: number) {
@@ -15,13 +14,19 @@ export default class Circle implements ICircle, IVector {
     return this.fromRadius(x, y, diameter / 2);
   }
 
-  private constructor() {}
-
   x: number;
   y: number;
-  @onSet(onRadiusChange) radius: number;
-  @onSet(onDiameterChange) diameter: number;
 }
+
+export default interface Circle {
+  radius: number;
+  diameter: number;
+}
+
+Object.defineProperties(Circle.prototype, {
+  radius: accessor('_radius', onRadiusChange),
+  diameter: accessor('_diameter', onDiameterChange),
+});
 
 export interface ICircle extends IVector {
   radius: number;
@@ -38,5 +43,5 @@ function onRadiusChange(circle: ICircleInternals) {
 }
 
 function onDiameterChange(circle: ICircleInternals) {
-  circle._radius = circle._radius * 2;
+  circle._radius = circle._diameter / 2;
 }

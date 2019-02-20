@@ -1,67 +1,84 @@
-import { onSet } from '../decorators';
-import { IVector } from '../vector';
+import accessor from '../util/accessor';
+import { IVector } from './Vector';
+import { collides, contains, containsPoint } from './util';
 
 export default class Rectangle implements IRectangle, IVector {
-  // #region Constructors
-  static fromCenter(x: number, y: number, width: number, height: number) {
+  static fromCenter(
+    x: number,
+    y: number,
+    halfWidth: number,
+    halfHeight: number,
+  ) {
     const rect = new Rectangle();
     rect.x = x;
     rect.y = y;
-    rect.width = width;
-    rect.height = height;
+    rect.halfWidth = halfWidth;
+    rect.halfHeight = halfHeight;
     return rect;
   }
 
   static fromTopLeft(top: number, left: number, width: number, height: number) {
-    return this.fromCenter(left + width / 2, top + height / 2, width, height);
+    const halfWidth = width / 2;
+    const halfHeight = height / 2;
+    return this.fromCenter(
+      left + halfWidth,
+      top + halfHeight,
+      halfWidth,
+      halfHeight,
+    );
   }
 
   static fromCoords(top: number, left: number, right: number, bottom: number) {
     return this.fromTopLeft(top, left, right - left, bottom - top);
   }
 
-  private constructor() {}
-  // #endregion
+  containsPoint(target: IVector): boolean {
+    return containsPoint(this, target);
+  }
 
-  // #region Properties
-  @onSet(onHorizontalChange) x: number;
-  @onSet(onVerticalChange) y: number;
+  contains(target: IRectangle) {
+    return contains(this, target);
+  }
 
-  @onSet(onWidthChange) width: number;
-  @onSet(onHeightChange) height: number;
-  @onSet(onHalfWidthChange) halfWidth: number;
-  @onSet(onHalfHeightChange) halfHeight: number;
+  collides(target: IRectangle) {
+    return collides(this, target);
+  }
+
+  toString() {
+    return `[${this.top},${this.left}][${this.bottom},${this.right}]`;
+  }
+}
+
+export default interface Rectangle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  halfWidth: number;
+  halfHeight: number;
 
   // When this properties are changed the position changes
-  @onSet(onTopChange) top: number;
-  @onSet(onLeftChange) left: number;
-  @onSet(onRightChange) right: number;
-  @onSet(onBottomChange) bottom: number;
-  // #endregion
-
-  // #region Geometry detection
-  containsPoint({ x, y }: IVector): boolean {
-    return y > this.top && y < this.bottom && x > this.left && x > this.right;
-  }
-
-  contains({ top, left, right, bottom }: IRectangle) {
-    return (
-      top > this.top &&
-      bottom < this.bottom &&
-      left > this.left &&
-      right < this.right
-    );
-  }
-
-  collides({ top, left, right, bottom }: IRectangle) {
-    const isBottomInside = this.bottom > bottom && bottom > this.top;
-    const isTopInside = this.bottom > top && top > this.top;
-    const isRightInside = this.right > right && right > this.left;
-    const isLeftInside = this.right > left && left > this.left;
-    return (isBottomInside || isTopInside) && (isRightInside || isLeftInside);
-  }
-  // #endregion
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
 }
+
+Object.defineProperties(Rectangle.prototype, {
+  x: accessor('_x', onHorizontalChange),
+  y: accessor('_y', onVerticalChange),
+
+  width: accessor('_width', onWidthChange),
+  height: accessor('_height', onHeightChange),
+  halfWidth: accessor('_halfWidth', onHalfWidthChange),
+  halfHeight: accessor('_halfHeight', onHalfHeightChange),
+
+  // When this properties are changed the position changes
+  top: accessor('_top', onTopChange),
+  left: accessor('_left', onLeftChange),
+  right: accessor('_right', onRightChange),
+  bottom: accessor('_bottom', onBottomChange),
+});
 
 export interface IRectangle extends IVector {
   width: number;
@@ -70,6 +87,10 @@ export interface IRectangle extends IVector {
   left: number;
   right: number;
   bottom: number;
+
+  containsPoint(point: IVector): boolean;
+  contains(target: IRectangle): boolean;
+  collides(target: IRectangle): boolean;
 }
 
 interface IRectangleInternal {

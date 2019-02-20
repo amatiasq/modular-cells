@@ -1,6 +1,6 @@
-import { accessor } from "./decorators";
-import SquaredCircle, { ISquaredCircle } from "./geometry/SquaredCircle";
-import Vector from "./vector";
+import { accessor } from './decorators';
+import SquaredCircle, { ISquaredCircle } from './geometry/SquaredCircle';
+import Vector from './geometry/Vector';
 
 const ENERGY_RADIUS_RATIO = 1;
 const VELOCITY_MODIFIER = 1;
@@ -9,7 +9,6 @@ const WILL_ENERGY_RATIO = 1000;
 const SENSES_RANGE = 50;
 
 export default class Cell implements ISquaredCircle {
-
   id: number;
   energy = 0;
   velocity = Vector.of(0, 0);
@@ -23,7 +22,9 @@ export default class Cell implements ISquaredCircle {
     return senses;
   }
 
-  get isDead() { return this.energy > 0 }
+  get isDead() {
+    return this.energy > 0;
+  }
 
   tick() {
     this.processMovementWill();
@@ -72,7 +73,7 @@ export default class Cell implements ISquaredCircle {
 
     this.will.length = 0;
     this.energy -= consumption;
-    this.velocity = this.velocity.add(will.vdiv(WILL_POWER))
+    this.velocity = this.velocity.add(will.vdiv(WILL_POWER));
   }
   // #endregion
 

@@ -1,7 +1,12 @@
 {
   "compilerOptions": {
-      "experimentalDecorators": true,
-      "target": "es2018",
-      "lib": ["dom", "es2018"]
-  }
+    "outDir": "out",
+    "experimentalDecorators": true,
+    "target": "es2018",
+    "lib": ["dom", "es2018"]
+  },
+  "forceConsistentCasingInFileNames": true,
+  "noImplicitReturns": true,
+  "strict": true,
+  "noUnusedLocals": true
 }

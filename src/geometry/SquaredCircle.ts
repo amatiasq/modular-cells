@@ -1,11 +1,11 @@
-import { accessor, onSet } from "../decorators";
-import { IVector } from "../vector";
-import { ICircle } from "./circle";
-import { IRectangle } from "./rectangle";
+import accessor from '../util/accessor';
+import { ICircle } from './Circle';
+import { IRectangle } from './Rectangle';
+import { IVector } from './Vector';
+import { collides, contains, containsPoint } from './util';
 
 export default class SquaredCircle
   implements ISquaredCircle, ICircle, IRectangle, IVector {
-  // #region Constructors
   static fromCenter(x: number, y: number, radius: number) {
     const area = new SquaredCircle();
     area.x = x;
@@ -14,28 +14,54 @@ export default class SquaredCircle
     return area;
   }
 
-  private constructor() {}
-  // #endregion
+  containsPoint(target: IVector): boolean {
+    return containsPoint(this, target);
+  }
 
-  // #region Properties
-  @onSet(onHorizontalSizeChange) x: number;
-  @onSet(onVerticalSizeChange) y: number;
+  contains(target: IRectangle) {
+    return contains(this, target);
+  }
 
-  @onSet(onRadiusChange) radius: number;
-  @onSet(onDiameterChange) diameter: number;
+  collides(target: IRectangle) {
+    return collides(this, target);
+  }
 
-  @accessor("diameter") width: number;
-  @accessor("diameter") height: number;
-  @accessor("radius") halfWidth: number;
-  @accessor("radius") halfHeight: number;
-
-  // When this properties are changed the position changes
-  @onSet(onVerticalPositionChange) top: number;
-  @onSet(onHorizontalPositionChange) left: number;
-  @onSet(onHorizontalPositionChange) right: number;
-  @onSet(onVerticalPositionChange) bottom: number;
-  // #endregion
+  toString() {
+    return `[${this.top},${this.left}][${this.bottom},${this.right}]`;
+  }
 }
+
+export default interface SquaredCircle {
+  x: number;
+  y: number;
+  radius: number;
+  diameter: number;
+  width: number;
+  height: number;
+  halfWidth: number;
+  halfHeight: number;
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+}
+
+Object.defineProperties(SquaredCircle.prototype, {
+  x: accessor('_x', onHorizontalSizeChange),
+  y: accessor('_y', onVerticalSizeChange),
+  radius: accessor('_radius', onRadiusChange),
+  diameter: accessor('_diameter', onDiameterChange),
+
+  width: accessor('diameter'),
+  height: accessor('diameter'),
+  halfWidth: accessor('radius'),
+  halfHeight: accessor('radius'),
+
+  top: accessor('_top', onVerticalPositionChange),
+  left: accessor('_left', onHorizontalPositionChange),
+  right: accessor('_right', onHorizontalPositionChange),
+  bottom: accessor('_bottom', onVerticalPositionChange),
+});
 
 export interface ISquaredCircle extends ICircle, IRectangle {}
 
@@ -61,6 +87,7 @@ function onVerticalSizeChange(area: ISquaredCircleInternals) {
 }
 
 function onRadiusChange(area: ISquaredCircleInternals) {
+  area._diameter = area._radius * 2;
   onHorizontalSizeChange(area);
   onVerticalSizeChange(area);
 }
@@ -74,7 +101,7 @@ function onDiameterChange(area: ISquaredCircleInternals) {
 function onVerticalPositionChange(
   area: ISquaredCircleInternals,
   prev: number,
-  value: number
+  value: number,
 ) {
   area._y += value - prev;
   onVerticalSizeChange(area);
@@ -83,7 +110,7 @@ function onVerticalPositionChange(
 function onHorizontalPositionChange(
   area: ISquaredCircleInternals,
   prev: number,
-  value: number
+  value: number,
 ) {
   area._x += value - prev;
   onHorizontalSizeChange(area);
