@@ -10,10 +10,10 @@ export function contains(
   { top, left, right, bottom }: IRectangle,
 ): boolean {
   return (
-    top > self.top &&
-    bottom < self.bottom &&
-    left > self.left &&
-    right < self.right
+    top >= self.top &&
+    bottom <= self.bottom &&
+    left >= self.left &&
+    right <= self.right
   );
 }
 

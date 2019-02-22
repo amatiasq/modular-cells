@@ -3,8 +3,10 @@
     "outDir": "out",
     "experimentalDecorators": true,
     "target": "es2018",
-    "lib": ["dom", "es2018"]
+    "lib": ["dom", "es2018"],
+    "declaration": true
   },
+  "exclude": ["node_modules", "dist", "out"],
   "forceConsistentCasingInFileNames": true,
   "noImplicitReturns": true,
   "strict": true,

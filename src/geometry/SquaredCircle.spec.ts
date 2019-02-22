@@ -3,9 +3,10 @@ import { testCollisions } from './Rectangle.spec';
 import SquaredCircle from './SquaredCircle';
 
 describe('SquaredCircle representation', () => {
-  it('should be instanciable', () => {
-    new SquaredCircle();
-  });
+  // Is private
+  // it('should be instanciable', () => {
+  //   new SquaredCircle();
+  // });
 
   describe('SquaredCircle.fromCenter constructor', () => {
     initializer(SquaredCircle.fromCenter(0, 0, 5), {

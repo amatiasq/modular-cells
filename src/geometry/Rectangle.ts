@@ -17,19 +17,30 @@ export default class Rectangle implements IRectangle, IVector {
     return rect;
   }
 
-  static fromTopLeft(top: number, left: number, width: number, height: number) {
+  static fromXY(x: number, y: number, width: number, height: number) {
     const halfWidth = width / 2;
     const halfHeight = height / 2;
     return this.fromCenter(
-      left + halfWidth,
-      top + halfHeight,
+      x + halfWidth,
+      y + halfHeight,
       halfWidth,
       halfHeight,
     );
   }
 
   static fromCoords(top: number, left: number, right: number, bottom: number) {
-    return this.fromTopLeft(top, left, right - left, bottom - top);
+    return this.fromXY(left, top, right - left, bottom - top);
+  }
+
+  private constructor() {}
+
+  is(target: IRectangle) {
+    return (
+      this.x === target.x &&
+      this.y === target.y &&
+      this.width === target.width &&
+      this.height === target.height
+    );
   }
 
   containsPoint(target: IVector): boolean {
@@ -45,7 +56,8 @@ export default class Rectangle implements IRectangle, IVector {
   }
 
   toString() {
-    return `[${this.top},${this.left}][${this.bottom},${this.right}]`;
+    const { top, left, width, height } = this;
+    return `Rectangle(t:${top},l:${left},w:${width},h:${height})`;
   }
 }
 
@@ -81,6 +93,7 @@ Object.defineProperties(Rectangle.prototype, {
 });
 
 export interface IRectangle extends IVector {
+  is(received: IRectangle): boolean;
   width: number;
   height: number;
   top: number;

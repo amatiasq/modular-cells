@@ -1,5 +1,6 @@
-import { DEVELOPMENT_MODE } from './constants';
-import Rectangle, { IRectangle } from './geometry/Rectangle';
+import { DEVELOPMENT_MODE } from '../constants';
+import { IRectangle, Rectangle } from '../geometry/index';
+import { IQuadEntity } from './IQuadEntity';
 
 export default class Quadtree {
   private nodes: Quadtree[] = null;
@@ -239,5 +240,3 @@ export default class Quadtree {
     );
   }
 }
-
-export interface IQuadEntity extends IRectangle {}

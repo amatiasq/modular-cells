@@ -2,9 +2,10 @@ import initializer from '../../test/initializer';
 import Circle from './Circle';
 
 describe('Circle representation', () => {
-  it('should be instanciable', () => {
-    new Circle();
-  });
+  // Is private
+  // it('should be instanciable', () => {
+  //   new Circle();
+  // });
 
   describe('Circle.fromDiameter constructor', () => {
     initializer(Circle.fromDiameter(0, 0, 10), {

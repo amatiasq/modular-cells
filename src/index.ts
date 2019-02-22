@@ -1,20 +1,15 @@
 import Cell from './cell';
-import SquaredCircle from './geometry/SquaredCircle';
 import Rectangle from './geometry/Rectangle';
+import SquaredCircle from './geometry/SquaredCircle';
+import Vector from './geometry/Vector';
 import Quadtree from './quadtree';
 import CanvasRenderer from './renderer';
 import { _, random } from './util';
-import Vector from './geometry/Vector';
 
 const cells = new Set<Cell>();
 const speed = 2;
 const radius = 5;
-const screen = Rectangle.fromTopLeft(
-  0,
-  0,
-  window.innerWidth,
-  window.innerHeight,
-);
+const screen = Rectangle.fromXY(0, 0, window.innerWidth, window.innerHeight);
 const renderer = new CanvasRenderer(document.querySelector('canvas'));
 const quad = new Quadtree(screen, 2, 10);
 let excluded = [];

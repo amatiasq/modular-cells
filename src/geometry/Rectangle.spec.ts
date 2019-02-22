@@ -3,9 +3,10 @@ import Rectangle, { IRectangle } from './Rectangle';
 import Vector from './Vector';
 
 describe('Rectangle representation', () => {
-  it('should be instanciable', () => {
-    new Rectangle();
-  });
+  // Is private
+  // it('should be instanciable', () => {
+  //   new Rectangle();
+  // });
 
   describe('Rectangle.fromCenter constructor', () => {
     initializer(Rectangle.fromCenter(0, 0, 5, 5), {
@@ -38,7 +39,7 @@ describe('Rectangle representation', () => {
   });
 
   describe('Rectangle.fromTopLeft constructor', () => {
-    initializer(Rectangle.fromTopLeft(0, 0, 10, 10), {
+    initializer(Rectangle.fromXY(0, 0, 10, 10), {
       x: 5,
       y: 5,
       width: 10,
@@ -167,8 +168,8 @@ export function testCollisions(create: () => IRectangle) {
       Rectangle.fromCenter(3, -3, 2, 2),
       Rectangle.fromCenter(3, 3, 2, 2),
     ]) {
-      it(`should return false if target is touching the border from the inside (${rect})`, () => {
-        expect(sut.contains(rect)).toBe(false);
+      it(`should return true if target is touching the border from the inside (${rect})`, () => {
+        expect(sut.contains(rect)).toBe(true);
       });
     }
 

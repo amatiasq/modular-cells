@@ -14,6 +14,16 @@ export default class SquaredCircle
     return area;
   }
 
+  private constructor() {}
+
+  is(target: ISquaredCircle) {
+    return (
+      this.x === target.x &&
+      this.y === target.y &&
+      this.radius === target.radius
+    );
+  }
+
   containsPoint(target: IVector): boolean {
     return containsPoint(this, target);
   }

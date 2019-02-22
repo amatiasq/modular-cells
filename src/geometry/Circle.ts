@@ -14,6 +14,8 @@ export default class Circle implements ICircle, IVector {
     return this.fromRadius(x, y, diameter / 2);
   }
 
+  private constructor() {}
+
   x: number;
   y: number;
 }
