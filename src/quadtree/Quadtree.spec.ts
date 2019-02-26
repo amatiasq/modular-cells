@@ -5,6 +5,7 @@ import { IQuadEntity } from './IQuadEntity';
 import { Quadtree } from './index';
 
 describe('Quadtree data structure', () => {
+  const QUADRANTS = ['nw', 'ne', 'sw', 'se'];
   const DEFAULT_MAX_ENTITIES = 2;
   const DEFAULT_MAX_DEPTH = 10;
   const DEFAULT_SCREEN_SIZE = 100;
@@ -75,6 +76,27 @@ describe('Quadtree data structure', () => {
     });
   });
 
+  describe('Quadtree#entitiesCount', () => {
+    it('should return 0 in a quad without entities', () => {
+      const sut = createQuad();
+      expect(sut.entitiesCount).toBe(0);
+    });
+
+    it('should return 1 in a quad with a single entity', () => {
+      const sut = createQuad();
+      sut.add(createEntity());
+      expect(sut.entitiesCount).toBe(1);
+    });
+
+    it('should return 3 in a quad with a three entities even if split threshold is lower', () => {
+      const sut = createQuad({ maxEntities: 2 });
+      sut.add(createEntity());
+      sut.add(createEntity());
+      sut.add(createEntity());
+      expect(sut.entitiesCount).toBe(3);
+    });
+  });
+
   describe('Quadtree#contains', () => {
     it('returns true if the passed argument is an entity registered in the quadtree', () => {
       const sut = createQuad();
@@ -126,6 +148,7 @@ describe('Quadtree data structure', () => {
       target: IQuadEntity,
       quadrantName: 'nw' | 'ne' | 'sw' | 'se',
       firstEntity = createEntity(),
+      expected = true,
     ) {
       const sut = createQuad({ screenSize: 100, maxEntities: 1 });
 
@@ -133,7 +156,7 @@ describe('Quadtree data structure', () => {
       sut.add(target);
 
       const quadrant = getNodes(sut)[quadrantName];
-      expect(quadrant.includes(target)).toBe(true);
+      expect(quadrant.includes(target)).toBe(expected);
     }
 
     describe('north west', () => {
@@ -144,11 +167,20 @@ describe('Quadtree data structure', () => {
           createEntity({ x: 70, y: 70 }),
         );
       });
+
+      it("should not contain entities outside it's area", () => {
+        const out = { x: 70, y: 70 };
+        createAndAddToo(createEntity(out), 'nw', createEntity(out), false);
+      });
     });
 
     describe('north east', () => {
       it('should contain any entity in the top right square', () => {
         createAndAddToo(createEntity({ x: 90, y: 10 }), 'ne');
+      });
+
+      it("should not contain entities outside it's area", () => {
+        createAndAddToo(createEntity(), 'ne', createEntity(), false);
       });
     });
 
@@ -156,12 +188,47 @@ describe('Quadtree data structure', () => {
       it('should contain any entity in the top left square', () => {
         createAndAddToo(createEntity({ x: 10, y: 90 }), 'sw');
       });
+
+      it("should not contain entities outside it's area", () => {
+        createAndAddToo(createEntity(), 'sw', createEntity(), false);
+      });
     });
 
     describe('south east', () => {
       it('should contain any entity in the top right square', () => {
         createAndAddToo(createEntity({ x: 90, y: 90 }), 'se');
       });
+
+      it("should not contain entities outside it's area", () => {
+        createAndAddToo(createEntity(), 'se', createEntity(), false);
+      });
+    });
+
+    describe('"edge" cases (see what I did there?)', () => {
+      function createQuadWithEdgeNodes() {
+        const quad = createQuad({
+          screenSize: 100,
+          maxEntities: 2,
+        });
+
+        quad.add(createEntity({ radius: 5, x: 50, y: 50 }));
+        quad.add(createEntity({ radius: 5, x: 5, y: 50 }));
+        quad.add(createEntity({ radius: 5, x: 50, y: 5 }));
+
+        return quad;
+      }
+
+      it('all entities should be in the parent quad', () => {
+        const sut = createQuadWithEdgeNodes();
+        expect(sut.entitiesCount).toBe(3);
+      });
+
+      for (const quadrant of QUADRANTS) {
+        it(`no entities should be at ${quadrant}`, () => {
+          const sut = getNodes(createQuadWithEdgeNodes())[quadrant];
+          expect(sut.entitiesCount).toBe(0);
+        });
+      }
     });
   });
 });

@@ -9,6 +9,18 @@ export default class Quadtree {
     return this._isDivided;
   }
 
+  get entitiesCount() {
+    if (!this.isDivided) return this.entities.size;
+
+    return (
+      this.entities.size +
+      this.nw.entitiesCount +
+      this.ne.entitiesCount +
+      this.sw.entitiesCount +
+      this.se.entitiesCount
+    );
+  }
+
   protected nw: Quadtree;
   protected ne: Quadtree;
   protected sw: Quadtree;
