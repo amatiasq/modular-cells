@@ -231,4 +231,66 @@ describe('Quadtree data structure', () => {
       }
     });
   });
+
+  describe('Quadtree#recalculate', () => {
+    function testNodesMovement(from, to = from, props = null) {
+      it(`should update node moving from ${from} to ${to}`, () => {
+        const sut = createQuad({ screenSize: 100, maxEntities: 2 });
+        const entities = {
+          nw: createEntity({ x: 15, y: 15 }),
+          ne: createEntity({ x: 85, y: 15 }),
+          sw: createEntity({ x: 15, y: 85 }),
+          se: createEntity({ x: 85, y: 85 }),
+        };
+
+        sut.add(entities.nw);
+        sut.add(entities.ne);
+        sut.add(entities.sw);
+        sut.add(entities.se);
+
+        const target = entities[from];
+        let nodes = getNodes(sut);
+
+        expect(nodes[from].contains(target));
+
+        if (props) {
+          Object.assign(target, props);
+        }
+
+        sut.recalculate();
+        nodes = getNodes(sut);
+
+        if (props) {
+          expect(nodes[from].contains(target)).toBe(false);
+          expect(nodes[to].contains(target)).toBe(true);
+        } else {
+          expect(nodes[from].contains(target)).toBe(true);
+        }
+      });
+    }
+
+    describe('should return all entities outside the tree', () => {});
+
+    describe('keep entity cuadrant when entity still insdie', () => {
+      testNodesMovement('nw');
+      testNodesMovement('ne');
+      testNodesMovement('sw');
+      testNodesMovement('se');
+    });
+
+    describe('change the entity quadrant as the entity moves', () => {
+      testNodesMovement('nw', 'ne', { x: 85 });
+      testNodesMovement('nw', 'sw', { y: 85 });
+      testNodesMovement('nw', 'se', { x: 85, y: 85 });
+      testNodesMovement('ne', 'nw', { x: 15 });
+      testNodesMovement('ne', 'se', { y: 85 });
+      testNodesMovement('ne', 'sw', { x: 15, y: 85 });
+      testNodesMovement('sw', 'se', { x: 85 });
+      testNodesMovement('sw', 'nw', { y: 15 });
+      testNodesMovement('sw', 'ne', { x: 85, y: 15 });
+      testNodesMovement('se', 'sw', { x: 15 });
+      testNodesMovement('se', 'ne', { y: 15 });
+      testNodesMovement('se', 'nw', { x: 15, y: 15 });
+    });
+  });
 });

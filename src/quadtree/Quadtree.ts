@@ -104,6 +104,27 @@ export default class Quadtree {
     return this.bounds.contains(entity);
   }
 
+  recalculate(): IQuadEntity[] {
+    const excluded = [];
+
+    if (this.isDivided) {
+      excluded.push(...this.nw.recalculate());
+      excluded.push(...this.ne.recalculate());
+      excluded.push(...this.sw.recalculate());
+      excluded.push(...this.se.recalculate());
+    }
+
+    for (let i = excluded.length - 1; i >= 0; i--) {
+      const entity = excluded[i];
+      if (this.bounds.contains(entity)) {
+        this.add(entity);
+        excluded.splice(i, 1);
+      }
+    }
+
+    return excluded;
+  }
+
   private getName(quadrant: Quadtree) {
     if (quadrant === this.nw) return 'nw';
     if (quadrant === this.ne) return 'ne';
