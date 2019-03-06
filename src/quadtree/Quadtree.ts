@@ -2,7 +2,7 @@ import { Rectangle } from '../geometry/index';
 import { IQuadEntity } from './IQuadEntity';
 
 export default class Quadtree {
-  private readonly entities = new Set<IQuadEntity>();
+  private entities: IQuadEntity[] = [];
 
   private _isDivided = false;
   get isDivided() {
@@ -10,10 +10,10 @@ export default class Quadtree {
   }
 
   get entitiesCount() {
-    if (!this.isDivided) return this.entities.size;
+    if (!this.isDivided) return this.entities.length;
 
     return (
-      this.entities.size +
+      this.entities.length +
       this.nw.entitiesCount +
       this.ne.entitiesCount +
       this.sw.entitiesCount +
@@ -34,15 +34,19 @@ export default class Quadtree {
   ) {}
 
   add(entity: IQuadEntity) {
-    this.entities.add(entity);
+    if (this.isDivided) {
+      // TODO:
+    }
 
-    if (!this.isDivided && this.entities.size > this.maxEntities) {
+    this.entities.push(entity);
+
+    if (!this.isDivided && this.entities.length > this.maxEntities) {
       this.split();
     }
   }
 
   includes(entity: IQuadEntity): boolean {
-    return this.entities.has(entity);
+    return this.entities.includes(entity);
   }
 
   private createChild(x: number, y: number, width: number, height: number) {
@@ -71,15 +75,15 @@ export default class Quadtree {
   }
 
   private distribute() {
-    const entities = [...this.entities];
-    this.entities.clear();
+    const entities = this.entities;
+    this.entities = [];
 
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
       const quadrant = this.getQuadrant(entity);
 
       if (quadrant) quadrant.add(entity);
-      else this.entities.add(entity);
+      else this.entities.push(entity);
     }
   }
 
@@ -105,21 +109,37 @@ export default class Quadtree {
   }
 
   recalculate(): IQuadEntity[] {
+    const toRecalculate = [];
     const excluded = [];
 
     if (this.isDivided) {
-      excluded.push(...this.nw.recalculate());
-      excluded.push(...this.ne.recalculate());
-      excluded.push(...this.sw.recalculate());
-      excluded.push(...this.se.recalculate());
+      toRecalculate.push(...this.nw.recalculate());
+      toRecalculate.push(...this.ne.recalculate());
+      toRecalculate.push(...this.sw.recalculate());
+      toRecalculate.push(...this.se.recalculate());
     }
 
-    for (let i = excluded.length - 1; i >= 0; i--) {
-      const entity = excluded[i];
+    toRecalculate.push(...this.entities);
+    this.entities = [];
+
+    for (let i = 0; i < toRecalculate.length; i++) {
+      const entity = toRecalculate[i];
       if (this.bounds.contains(entity)) {
         this.add(entity);
-        excluded.splice(i, 1);
+      } else {
+        excluded.push(entity);
       }
+    }
+
+    if (this.isDivided && this.entitiesCount <= this.maxEntities) {
+      this.entities = [
+        ...this.entities,
+        ...this.nw.entities,
+        ...this.ne.entities,
+        ...this.sw.entities,
+        ...this.se.entities,
+      ];
+      this._isDivided = false;
     }
 
     return excluded;

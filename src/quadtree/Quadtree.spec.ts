@@ -11,11 +11,11 @@ describe('Quadtree data structure', () => {
   const DEFAULT_SCREEN_SIZE = 100;
 
   function createQuad({
-    screenSize = DEFAULT_SCREEN_SIZE,
+    size = DEFAULT_SCREEN_SIZE,
     maxEntities = DEFAULT_MAX_ENTITIES,
     maxDepth = DEFAULT_MAX_DEPTH,
   } = {}) {
-    const bounds = Rectangle.fromCoords(0, 0, screenSize, screenSize);
+    const bounds = Rectangle.fromCoords(0, 0, size, size);
     return new Quadtree(bounds, maxEntities, maxDepth);
   }
 
@@ -111,7 +111,7 @@ describe('Quadtree data structure', () => {
     function getSplitted() {
       const maxEntities = 2;
       const sut = createQuad({
-        screenSize: 10,
+        size: 10,
         maxEntities,
       });
 
@@ -150,7 +150,7 @@ describe('Quadtree data structure', () => {
       firstEntity = createEntity(),
       expected = true,
     ) {
-      const sut = createQuad({ screenSize: 100, maxEntities: 1 });
+      const sut = createQuad({ size: 100, maxEntities: 1 });
 
       sut.add(firstEntity);
       sut.add(target);
@@ -207,7 +207,7 @@ describe('Quadtree data structure', () => {
     describe('"edge" cases (see what I did there?)', () => {
       function createQuadWithEdgeNodes() {
         const quad = createQuad({
-          screenSize: 100,
+          size: 100,
           maxEntities: 2,
         });
 
@@ -235,7 +235,7 @@ describe('Quadtree data structure', () => {
   describe('Quadtree#recalculate', () => {
     function testNodesMovement(from, to = from, props = null) {
       it(`should update node moving from ${from} to ${to}`, () => {
-        const sut = createQuad({ screenSize: 100, maxEntities: 2 });
+        const sut = createQuad({ size: 100, maxEntities: 2 });
         const entities = {
           nw: createEntity({ x: 15, y: 15 }),
           ne: createEntity({ x: 85, y: 15 }),
@@ -269,7 +269,38 @@ describe('Quadtree data structure', () => {
       });
     }
 
-    describe('should return all entities outside the tree', () => {});
+    describe('should return all entities outside the quad', () => {});
+
+    describe('should remove the nodes if entities count becomes equal minimum', () => {
+      var sut = createQuad({ maxEntities: 1, maxDepth: 1, size: 30 });
+      var first = createEntity({ x: 15, y: 15 });
+      var second = createEntity({ x: 15, y: 15 });
+
+      sut.add(first);
+      sut.add(second);
+      expect(sut.isDivided).toBe(true);
+
+      second.x = 100;
+      sut.recalculate();
+      expect(sut.isDivided).toBe(false);
+    });
+
+    describe('should remove the nodes if entities count becomes equal minimum', () => {
+      var sut = createQuad({ maxEntities: 2, maxDepth: 1, size: 30 });
+      var first = createEntity({ x: 15, y: 15 });
+      var second = createEntity({ x: 15, y: 15 });
+      var third = createEntity({ x: 15, y: 15 });
+
+      sut.add(first);
+      sut.add(second);
+      sut.add(third);
+      expect(sut.isDivided).toBe(true);
+
+      second.x = 100;
+      third.x = 100;
+      sut.recalculate();
+      expect(sut.isDivided).toBe(false);
+    });
 
     describe('keep entity cuadrant when entity still insdie', () => {
       testNodesMovement('nw');
@@ -293,4 +324,6 @@ describe('Quadtree data structure', () => {
       testNodesMovement('se', 'nw', { x: 15, y: 15 });
     });
   });
+
+  // TEST: Entities are added to the right quadrant after the quad is divided
 });
