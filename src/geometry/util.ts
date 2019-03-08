@@ -27,3 +27,22 @@ export function collides(
   const isLeftInside = self.right > left && left > self.left;
   return (isBottomInside || isTopInside) && (isRightInside || isLeftInside);
 }
+
+export function random(): number;
+export function random(max: number): number;
+export function random(min: number, max: number): number;
+export function random(minOrMax?: number, max?: number): number {
+  let min;
+
+  if (minOrMax == null) {
+    min = 0;
+    max = 1;
+  } else if (max == null) {
+    min = 0;
+    max = minOrMax;
+  } else {
+    min = minOrMax;
+  }
+
+  return Math.random() * (max - min) + min;
+}

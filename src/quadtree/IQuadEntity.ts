@@ -1,3 +1,3 @@
 import { IRectangle } from '../geometry/index';
 
-export interface IQuadEntity extends IRectangle {}
+export default interface IQuadEntity extends IRectangle {}

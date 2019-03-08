@@ -3,45 +3,46 @@ import '../../test/toBeSame';
 import { Rectangle } from '../geometry/index';
 import { IQuadEntity } from './IQuadEntity';
 import { Quadtree } from './index';
+import { QuadrantName } from './quadtree';
 
-describe('Quadtree data structure', () => {
-  const QUADRANTS = ['nw', 'ne', 'sw', 'se'];
-  const DEFAULT_MAX_ENTITIES = 2;
-  const DEFAULT_MAX_DEPTH = 10;
-  const DEFAULT_SCREEN_SIZE = 100;
+const QUADRANTS = ['nw', 'ne', 'sw', 'se'];
+const DEFAULT_MAX_ENTITIES = 2;
+const DEFAULT_MAX_DEPTH = 10;
+const DEFAULT_SCREEN_SIZE = 100;
 
-  function createQuad({
-    size = DEFAULT_SCREEN_SIZE,
-    maxEntities = DEFAULT_MAX_ENTITIES,
-    maxDepth = DEFAULT_MAX_DEPTH,
-  } = {}) {
-    const bounds = Rectangle.fromCoords(0, 0, size, size);
-    return new Quadtree(bounds, maxEntities, maxDepth);
+function createQuad({
+  size = DEFAULT_SCREEN_SIZE,
+  maxEntities = DEFAULT_MAX_ENTITIES,
+  maxDepth = DEFAULT_MAX_DEPTH,
+} = {}) {
+  const bounds = Rectangle.fromCoords(0, 0, size, size);
+  return new Quadtree(bounds, maxEntities, maxDepth);
+}
+
+// TODO: Change x and y to 10
+function createEntity({ x = 5, y = 5, radius = 5 } = {}) {
+  return Rectangle.fromCenter(x, y, radius, radius);
+}
+
+function createRectangle({ x = 0, y = 0, size = 5 }) {
+  return Rectangle.fromXY(x, y, size, size);
+}
+
+function createFilledQuad({
+  size = undefined,
+  maxEntities = DEFAULT_MAX_ENTITIES,
+  maxDepth = undefined,
+} = {}) {
+  const quad = createQuad({ size, maxEntities, maxDepth });
+
+  for (let i = 0; i < maxEntities; i++) {
+    quad.add(createEntity());
   }
 
-  function createEntity({ x = 5, y = 5, radius = 5 } = {}) {
-    return Rectangle.fromCenter(x, y, radius, radius);
-  }
+  return quad;
+}
 
-  function createRectangle({ x = 0, y = 0, size = 5 }) {
-    return Rectangle.fromXY(x, y, size, size);
-  }
-
-  function fillQuad(quad: Quadtree, maxEntities: number) {
-    for (let i = 0; i < maxEntities; i++) {
-      quad.add(createEntity());
-    }
-  }
-
-  function getNodes(quad: Quadtree) {
-    return (quad as any) as {
-      nw: Quadtree;
-      ne: Quadtree;
-      sw: Quadtree;
-      se: Quadtree;
-    };
-  }
-
+describe('Quadtree public API', () => {
   it('should be instanciable', () => {
     createQuad();
   });
@@ -63,10 +64,7 @@ describe('Quadtree data structure', () => {
     });
 
     it('should return true when the amount of entities exceeds the maxEntities threshold', () => {
-      const maxEntities = 2;
-      const sut = createQuad({ maxEntities });
-
-      fillQuad(sut, maxEntities);
+      const sut = createFilledQuad();
       expect(sut.isDivided).toBe(false);
 
       for (let i = 0; i < 1; i++) {
@@ -97,7 +95,7 @@ describe('Quadtree data structure', () => {
     });
   });
 
-  describe('Quadtree#contains', () => {
+  describe('Quadtree#includes', () => {
     it('returns true if the passed argument is an entity registered in the quadtree', () => {
       const sut = createQuad();
       const entity = createEntity();
@@ -105,17 +103,83 @@ describe('Quadtree data structure', () => {
       sut.add(entity);
       expect(sut.includes(entity)).toBe(true);
     });
+
+    it('returns false if the passed argument is not an entity added to the quadtree', () => {
+      const sut = createQuad();
+      const entity = createEntity();
+
+      expect(sut.includes(entity)).toBe(false);
+    });
+
+    it('returns true even after the quadtree has been divided', () => {
+      const sut = createFilledQuad({ size: 50 });
+      const entity = createEntity({ x: 10, y: 10 });
+
+      sut.add(entity);
+      expect(sut.includes(entity)).toBe(true);
+    });
   });
+
+  describe('Quadtree#recalculate', () => {
+    it('should return all entities outside the quad', () => {
+      var sut = createQuad({ size: 30 });
+      var entity = createEntity({ x: 15, y: 15 });
+
+      sut.add(entity);
+      expect(sut.entitiesCount).toBe(1);
+
+      entity.x = 100;
+      expect(sut.recalculate()).toContain(entity);
+      expect(sut.entitiesCount).toBe(0);
+    });
+
+    it('should remove the nodes if entities count becomes equal minimum', () => {
+      var sut = createQuad({ maxEntities: 1, maxDepth: 1, size: 30 });
+      var first = createEntity({ x: 15, y: 15 });
+      var second = createEntity({ x: 15, y: 15 });
+
+      sut.add(first);
+      sut.add(second);
+      expect(sut.isDivided).toBe(true);
+
+      second.x = 100;
+      sut.recalculate();
+      expect(sut.isDivided).toBe(false);
+    });
+
+    it('should remove the nodes if entities count becomes equal minimum', () => {
+      var sut = createQuad({ maxEntities: 2, maxDepth: 1, size: 30 });
+      var first = createEntity({ x: 15, y: 15 });
+      var second = createEntity({ x: 15, y: 15 });
+      var third = createEntity({ x: 15, y: 15 });
+
+      sut.add(first);
+      sut.add(second);
+      sut.add(third);
+      expect(sut.isDivided).toBe(true);
+
+      second.x = 100;
+      third.x = 100;
+      sut.recalculate();
+      expect(sut.isDivided).toBe(false);
+    });
+  });
+});
+
+// Since this tool does optimization some behaviour is not visible from the public API
+describe('Quadtree internals', () => {
+  function getNodes(quad: Quadtree) {
+    return (quad as any) as {
+      nw: Quadtree;
+      ne: Quadtree;
+      sw: Quadtree;
+      se: Quadtree;
+    };
+  }
 
   describe('split up calculation', () => {
     function getSplitted() {
-      const maxEntities = 2;
-      const sut = createQuad({
-        size: 10,
-        maxEntities,
-      });
-
-      fillQuad(sut, maxEntities);
+      const sut = createFilledQuad({ size: 10 });
       sut.add(createEntity());
 
       expect(sut.isDivided).toBe(true);
@@ -146,7 +210,7 @@ describe('Quadtree data structure', () => {
   describe('main behaviour', () => {
     function createAndAddToo(
       target: IQuadEntity,
-      quadrantName: 'nw' | 'ne' | 'sw' | 'se',
+      quadrantName: QuadrantName,
       firstEntity = createEntity(),
       expected = true,
     ) {
@@ -269,39 +333,6 @@ describe('Quadtree data structure', () => {
       });
     }
 
-    describe('should return all entities outside the quad', () => {});
-
-    describe('should remove the nodes if entities count becomes equal minimum', () => {
-      var sut = createQuad({ maxEntities: 1, maxDepth: 1, size: 30 });
-      var first = createEntity({ x: 15, y: 15 });
-      var second = createEntity({ x: 15, y: 15 });
-
-      sut.add(first);
-      sut.add(second);
-      expect(sut.isDivided).toBe(true);
-
-      second.x = 100;
-      sut.recalculate();
-      expect(sut.isDivided).toBe(false);
-    });
-
-    describe('should remove the nodes if entities count becomes equal minimum', () => {
-      var sut = createQuad({ maxEntities: 2, maxDepth: 1, size: 30 });
-      var first = createEntity({ x: 15, y: 15 });
-      var second = createEntity({ x: 15, y: 15 });
-      var third = createEntity({ x: 15, y: 15 });
-
-      sut.add(first);
-      sut.add(second);
-      sut.add(third);
-      expect(sut.isDivided).toBe(true);
-
-      second.x = 100;
-      third.x = 100;
-      sut.recalculate();
-      expect(sut.isDivided).toBe(false);
-    });
-
     describe('keep entity cuadrant when entity still insdie', () => {
       testNodesMovement('nw');
       testNodesMovement('ne');
@@ -325,5 +356,60 @@ describe('Quadtree data structure', () => {
     });
   });
 
-  // TEST: Entities are added to the right quadrant after the quad is divided
+  describe('Quadtree#add after divide', () => {
+    function testAddAfterDivided(quadrant: QuadrantName, entity) {
+      it(`should add entities when corresponding to the ${quadrant} quadrant`, () => {
+        const sut = createFilledQuad({ size: 50 });
+
+        sut.add(entity);
+        const nodes = getNodes(sut);
+
+        expect(nodes[quadrant].includes(entity)).toBe(true);
+      });
+    }
+
+    testAddAfterDivided('nw', createEntity({ x: 15, y: 15 }));
+    testAddAfterDivided('ne', createEntity({ x: 35, y: 15 }));
+    testAddAfterDivided('sw', createEntity({ x: 15, y: 35 }));
+    testAddAfterDivided('se', createEntity({ x: 35, y: 35 }));
+
+    describe('add to the parent node if it touches the quadrant division', () => {
+      function testQuadrantDivision(coords) {
+        const sut = createFilledQuad({ size: 50 });
+        const entity = createEntity(coords);
+
+        sut.add(entity);
+
+        const { nw, ne, sw, se } = getNodes(sut);
+        expect(sut.includes(entity)).toBe(true);
+        expect(nw.includes(entity)).toBe(false);
+        expect(ne.includes(entity)).toBe(false);
+        expect(sw.includes(entity)).toBe(false);
+        expect(se.includes(entity)).toBe(false);
+      }
+
+      it('should work if entity is at center', () => {
+        testQuadrantDivision({ x: 25, y: 25 });
+      });
+
+      it('should work if entity is at top border', () => {
+        testQuadrantDivision({ x: 25, y: 15 });
+      });
+
+      it('should work if entity is at left border', () => {
+        testQuadrantDivision({ x: 15, y: 25 });
+      });
+
+      it('should work if entity is at right border', () => {
+        testQuadrantDivision({ x: 35, y: 25 });
+      });
+
+      it('should work if entity is at bottom border', () => {
+        testQuadrantDivision({ x: 25, y: 35 });
+      });
+    });
+  });
+
+  // TODO: Respect maxDepth
+  // TODO: TDD #retrieve
 });

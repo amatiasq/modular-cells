@@ -9,7 +9,7 @@ export default class Rectangle implements IRectangle, IVector {
     halfWidth: number,
     halfHeight: number,
   ) {
-    const rect = new Rectangle();
+    const rect = new this();
     rect.x = x;
     rect.y = y;
     rect.halfWidth = halfWidth;
@@ -32,7 +32,7 @@ export default class Rectangle implements IRectangle, IVector {
     return this.fromXY(left, top, right - left, bottom - top);
   }
 
-  private constructor() {}
+  constructor() {}
 
   is(target: IRectangle) {
     return (
@@ -152,21 +152,21 @@ function onHalfHeightChange(rect: IRectangleInternal) {
 }
 
 function onTopChange(rect: IRectangleInternal, value, prev) {
-  rect._y += value - prev;
+  rect._y -= value - prev;
   onVerticalChange(rect);
 }
 
 function onLeftChange(rect: IRectangleInternal, value, prev) {
-  rect._x += value - prev;
+  rect._x -= value - prev;
   onHorizontalChange(rect);
 }
 
 function onRightChange(rect: IRectangleInternal, value, prev) {
-  rect._x += value - prev;
+  rect._x -= value - prev;
   onHorizontalChange(rect);
 }
 
 function onBottomChange(rect: IRectangleInternal, value, prev) {
-  rect._y += value - prev;
+  rect._y -= value - prev;
   onVerticalChange(rect);
 }

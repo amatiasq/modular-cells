@@ -1,5 +1,7 @@
 import { Rectangle } from '../geometry/index';
-import { IQuadEntity } from './IQuadEntity';
+import IQuadEntity from './IQuadEntity';
+
+let count = 0;
 
 export default class Quadtree {
   private entities: IQuadEntity[] = [];
@@ -31,22 +33,35 @@ export default class Quadtree {
     public readonly maxEntities: number,
     public readonly maxDepth: number,
     public readonly level: number = 0,
-  ) {}
+  ) {
+    count++;
+    console.log(`Quadtree instances: ${count}`);
+  }
 
   add(entity: IQuadEntity) {
-    if (this.isDivided) {
-      // TODO:
+    if (!this.isDivided) {
+      this.entities.push(entity);
+
+      if (this.entities.length > this.maxEntities) {
+        this.split();
+      }
+
+      return;
     }
 
-    this.entities.push(entity);
-
-    if (!this.isDivided && this.entities.length > this.maxEntities) {
-      this.split();
-    }
+    if (!this.addToQuadrant(entity)) this.entities.push(entity);
   }
 
   includes(entity: IQuadEntity): boolean {
-    return this.entities.includes(entity);
+    if (!this.isDivided) return this.entities.includes(entity);
+
+    return (
+      this.entities.includes(entity) ||
+      this.nw.includes(entity) ||
+      this.ne.includes(entity) ||
+      this.sw.includes(entity) ||
+      this.se.includes(entity)
+    );
   }
 
   private createChild(x: number, y: number, width: number, height: number) {
@@ -67,6 +82,8 @@ export default class Quadtree {
   }
 
   private splitArea() {
+    if (this.nw && this.ne && this.sw && this.se) return;
+
     const b = this.bounds;
     this.nw = this.createChild(b.left, b.top, b.halfWidth, b.halfHeight);
     this.ne = this.createChild(b.x, b.top, b.halfWidth, b.halfHeight);
@@ -80,15 +97,14 @@ export default class Quadtree {
 
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
-      const quadrant = this.getQuadrant(entity);
 
-      if (quadrant) quadrant.add(entity);
-      else this.entities.push(entity);
+      if (!this.addToQuadrant(entity)) this.entities.push(entity);
     }
   }
 
-  protected getQuadrant(entity: IQuadEntity): Quadtree {
+  protected addToQuadrant(entity: IQuadEntity): boolean {
     if (!this.contains(entity)) {
+      debugger;
       throw new Error(
         `Can't get index. The entity ${entity} is not contained in ${
           this.bounds
@@ -96,12 +112,27 @@ export default class Quadtree {
       );
     }
 
-    const { x, y } = this.bounds;
-    if (entity.bottom < y && entity.right < x) return this.nw;
-    if (entity.bottom < y && entity.left > x) return this.ne;
-    if (entity.top > y && entity.right < x) return this.sw;
-    if (entity.top > y && entity.left > x) return this.se;
-    return null;
+    if (this.nw.contains(entity)) {
+      this.nw.add(entity);
+      return true;
+    }
+
+    if (this.ne.contains(entity)) {
+      this.ne.add(entity);
+      return true;
+    }
+
+    if (this.sw.contains(entity)) {
+      this.sw.add(entity);
+      return true;
+    }
+
+    if (this.se.contains(entity)) {
+      this.se.add(entity);
+      return true;
+    }
+
+    return false;
   }
 
   contains(entity: IQuadEntity) {
@@ -134,15 +165,25 @@ export default class Quadtree {
     if (this.isDivided && this.entitiesCount <= this.maxEntities) {
       this.entities = [
         ...this.entities,
-        ...this.nw.entities,
-        ...this.ne.entities,
-        ...this.sw.entities,
-        ...this.se.entities,
+        ...this.nw.empty(),
+        ...this.ne.empty(),
+        ...this.sw.empty(),
+        ...this.se.empty(),
       ];
       this._isDivided = false;
     }
 
     return excluded;
+  }
+
+  private empty() {
+    if (this.entities.length === 0) {
+      return this.entities;
+    }
+
+    const { entities } = this;
+    this.entities = [];
+    return entities;
   }
 
   private getName(quadrant: Quadtree) {
@@ -153,3 +194,5 @@ export default class Quadtree {
     return 'NOT A CHILDREN';
   }
 }
+
+export type QuadrantName = 'nw' | 'ne' | 'sw' | 'se';
