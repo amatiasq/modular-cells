@@ -6,13 +6,13 @@
   "typings": "out/index.d.ts",
   "dependencies": {
     "eslint": "^5.12.0",
+    "jest": "^24.3.1",
     "tslint": "^5.12.1",
     "typescript": "^3.2.2"
   },
   "devDependencies": {
     "@types/jest": "^24.0.6",
     "husky": "^1.3.1",
-    "jest": "^23.6.0",
     "parcel-bundler": "^1.11.0",
     "ts-jest": "^24.0.0"
   },
@@ -22,7 +22,7 @@
   "scripts": {
     "compile": "tsc --build tsconfig.json",
     "start": "parcel index.html",
-    "clear": "rm -r .cache dist",
+    "clear": "rm -r .cache dist out || exit 0",
     "test": "jest",
     "t": "jest --watch"
   },

@@ -1,7 +1,7 @@
 import '../../test/toBeSame';
 
 import { Rectangle } from '../geometry/index';
-import { IQuadEntity } from './IQuadEntity';
+import IQuadEntity from './IQuadEntity';
 import { Quadtree } from './index';
 import { QuadrantName } from './quadtree';
 
@@ -36,7 +36,7 @@ function createFilledQuad({
   const quad = createQuad({ size, maxEntities, maxDepth });
 
   for (let i = 0; i < maxEntities; i++) {
-    quad.add(createEntity());
+    quad.add(createEntity({ x: 10, y: 10 }));
   }
 
   return quad;
@@ -179,7 +179,7 @@ describe('Quadtree internals', () => {
 
   describe('split up calculation', () => {
     function getSplitted() {
-      const sut = createFilledQuad({ size: 10 });
+      const sut = createFilledQuad({ size: 100 });
       sut.add(createEntity());
 
       expect(sut.isDivided).toBe(true);
@@ -188,22 +188,22 @@ describe('Quadtree internals', () => {
 
     it('north west should be top left square', () => {
       const { nw } = getSplitted();
-      expect(nw.bounds).toBeSame(createRectangle({ x: 0, y: 0, size: 5 }));
+      expect(nw.bounds).toBeSame(createRectangle({ x: 0, y: 0, size: 50 }));
     });
 
     it('north east should be top right square', () => {
       const { ne } = getSplitted();
-      expect(ne.bounds).toBeSame(createRectangle({ x: 5, y: 0, size: 5 }));
+      expect(ne.bounds).toBeSame(createRectangle({ x: 50, y: 0, size: 50 }));
     });
 
     it('south west should be bottom left square', () => {
       const { sw } = getSplitted();
-      expect(sw.bounds).toBeSame(createRectangle({ x: 0, y: 5, size: 5 }));
+      expect(sw.bounds).toBeSame(createRectangle({ x: 0, y: 50, size: 50 }));
     });
 
     it('south east should be bottom right square', () => {
       const { se } = getSplitted();
-      expect(se.bounds).toBeSame(createRectangle({ x: 5, y: 5, size: 5 }));
+      expect(se.bounds).toBeSame(createRectangle({ x: 50, y: 50, size: 50 }));
     });
   });
 
@@ -410,6 +410,49 @@ describe('Quadtree internals', () => {
     });
   });
 
-  // TODO: Respect maxDepth
+  describe('maxDepth option', () => {
+    describe('should not divide deeper than the maxDepth option', () => {
+      function createHugeFilledQuad({ maxDepth = 1 } = {}) {
+        const maxEntities = 2;
+        const sut = createFilledQuad({
+          maxDepth,
+          maxEntities,
+          // huge so entities fall always in nw
+          size: 1000000000,
+        });
+
+        sut.add(createEntity({ x: 10, y: 10 }));
+        return sut;
+      }
+
+      it('when maxDepth is 0', () => {
+        const sut = createHugeFilledQuad({ maxDepth: 0 });
+        expect(sut.isDivided).toBe(false);
+      });
+
+      it('when maxDepth is 1', () => {
+        const sut = createHugeFilledQuad({ maxDepth: 1 });
+        expect(sut.isDivided).toBe(true);
+        const first = getNodes(sut).nw;
+        expect(first.isDivided).toBe(false);
+      });
+
+      it('when maxDepth is 2', () => {
+        const sut = createHugeFilledQuad({ maxDepth: 2 });
+        expect(sut.isDivided).toBe(true);
+        const first = getNodes(sut).nw;
+        expect(first.isDivided).toBe(true);
+        const second = getNodes(first).nw;
+        expect(second.isDivided).toBe(false);
+      });
+    });
+  });
+
+  describe('Quadtree#resize', () => {
+    it('should update bounds', () => {
+      // TODO:
+    });
+  });
+
   // TODO: TDD #retrieve
 });

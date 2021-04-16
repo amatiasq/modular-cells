@@ -35,7 +35,7 @@ export default class Quadtree {
     public readonly level: number = 0,
   ) {
     count++;
-    console.log(`Quadtree instances: ${count}`);
+    console.log(`Created Quadtree instance Nº ${count} for depth ${level}`);
   }
 
   add(entity: IQuadEntity) {
@@ -74,6 +74,7 @@ export default class Quadtree {
   }
 
   protected split() {
+    if (this.level >= this.maxDepth) return;
     if (this.isDivided) throw new Error('Already splitted');
 
     this._isDivided = true;
